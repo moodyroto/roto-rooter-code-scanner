@@ -1,3 +1,5 @@
 node_modules/
 scan-report/
 *.log
+
+.DS_Store
