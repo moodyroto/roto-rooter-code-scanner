@@ -4,7 +4,6 @@ import { detectLanguage, isJsTs } from './languages.js';
 import { lineMetrics } from './metrics/lines.js';
 import { parseFile, countDefinitions, commentLineNumbers } from './analyzers/ast.js';
 import { fileComplexity } from './analyzers/complexity.js';
-import { findDuplication } from './analyzers/duplication.js';
 import { scanSecrets } from './analyzers/secrets.js';
 import { scoreResult } from './score.js';
 
@@ -16,7 +15,6 @@ export function scan(rootDir, { threshold = 10, ignore = [], gitignore = true, i
   const flagged = [];
   const allFnScores = [];
   const secretFindings = [];
-  const dupEntries = [];
   const skipped = [];
 
   for (const file of files) {
@@ -48,22 +46,20 @@ export function scan(rootDir, { threshold = 10, ignore = [], gitignore = true, i
         allFnScores.push(fn.score);
         if (fn.score > threshold) flagged.push({ file, line: fn.line, name: fn.name, score: fn.score, band: fn.band });
       }
-      dupEntries.push({ file, content, tokens: parsed.tokens });
     } else {
       const m = lineMetrics(content);
       summary.totalLines += m.total; summary.code += m.code; summary.blanks += m.blanks;
     }
   }
 
-  const duplication = findDuplication(dupEntries);
   const avg = allFnScores.length ? Number((allFnScores.reduce((a, b) => a + b, 0) / allFnScores.length).toFixed(2)) : 0;
   const max = allFnScores.length ? Math.max(...allFnScores) : 0;
   const complexity = { threshold, avg, max, flagged };
   const secrets = { findings: secretFindings };
-  const score = scoreResult({ complexity, duplication, secrets });
+  const score = scoreResult({ complexity, secrets });
 
   return {
     meta: { target: rootDir, scannedAt: new Date().toISOString(), durationMs: Date.now() - start },
-    summary, complexity, duplication, secrets, score, skipped,
+    summary, complexity, secrets, score, skipped,
   };
 }

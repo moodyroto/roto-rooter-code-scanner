@@ -22,6 +22,7 @@ test('produces a complete result object', () => {
   assert.ok('value' in r.score);
   assert.ok(Array.isArray(r.complexity.flagged));
   assert.ok(r.skipped.some((s) => s.file.endsWith('broken.ts')));
+  assert.ok(!('duplication' in r), 'duplication key must be removed from the result');
 });
 
 test('scanner skips gitignored files by default', () => {
