@@ -33,6 +33,7 @@ export function scanSecrets(content, filePath) {
 
 const VM_METHODS = new Set(['runInThisContext', 'runInNewContext', 'runInContext']);
 const TIMER_NAMES = new Set(['setTimeout', 'setInterval']);
+const GLOBAL_OBJECTS = new Set(['window', 'globalThis', 'global', 'self']);
 
 function isStringArg(arg) {
   return !!arg && (arg.type === 'StringLiteral' || arg.type === 'TemplateLiteral');
@@ -108,7 +109,10 @@ export function scanDangerousCalls(ast, content, filePath) {
             && callee.object.type === 'Identifier' && namespaceBindings.has(callee.object.name)) {
           add(path.node, 'child-process-exec', 'high'); return;
         }
-        if (TIMER_NAMES.has(prop) && isStringArg(args[0])) { add(path.node, 'string-timer', 'medium'); return; }
+        if (TIMER_NAMES.has(prop) && isStringArg(args[0])
+            && callee.object.type === 'Identifier' && GLOBAL_OBJECTS.has(callee.object.name)) {
+          add(path.node, 'string-timer', 'medium'); return;
+        }
       }
     },
   });

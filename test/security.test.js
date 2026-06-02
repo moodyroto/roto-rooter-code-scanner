@@ -52,3 +52,8 @@ test('does NOT flag RegExp.exec, function-arg timers, or non-cp execSync', () =>
   assert.deepEqual(rules('setTimeout(() => {}, 1000);\n'), []);
   assert.deepEqual(rules('obj.execSync(x);\n'), []);
 });
+
+test('flags window.setTimeout with a string but not arbitrary objects', () => {
+  assert.deepEqual(rules('window.setTimeout("x()", 1);\n'), ['string-timer']);
+  assert.deepEqual(rules('myScheduler.setTimeout("x()", 1);\n'), []);
+});
