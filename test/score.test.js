@@ -3,19 +3,19 @@ import assert from 'node:assert/strict';
 import { scoreResult } from '../src/score.js';
 
 test('clean codebase scores 100 / A', () => {
-  const r = scoreResult({ complexity: { flagged: [] }, duplication: { percentage: 0 }, secrets: { findings: [] } });
+  const r = scoreResult({ complexity: { flagged: [] }, secrets: { findings: [] } });
   assert.equal(r.value, 100);
   assert.equal(r.grade, 'A');
 });
 
-test('penalizes secrets, complexity and duplication and clamps at 0', () => {
+test('penalizes secrets and complexity', () => {
   const r = scoreResult({
     complexity: { flagged: [{ band: 'high-risk' }, { band: 'refactor' }] },
-    duplication: { percentage: 20 },
     secrets: { findings: [{ severity: 'high' }, { severity: 'medium' }] },
   });
-  // 100 - (8+3) - min(10,25) - (15 + 9) = 100 - 11 - 10 - 24 = 55
-  assert.equal(r.value, 55);
-  assert.equal(r.grade, 'F');
+  // 100 - (8 + 3) - (15 + 9) = 100 - 11 - 24 = 65
+  assert.equal(r.value, 65);
+  assert.equal(r.grade, 'D');
   assert.ok(r.breakdown.secrets < 0);
+  assert.ok(!('duplication' in r.breakdown));
 });
