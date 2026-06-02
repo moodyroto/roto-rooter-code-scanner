@@ -8,9 +8,9 @@ import { findDuplication } from './analyzers/duplication.js';
 import { scanSecrets } from './analyzers/secrets.js';
 import { scoreResult } from './score.js';
 
-export function scan(rootDir, { threshold = 10, ignore = [] } = {}) {
+export function scan(rootDir, { threshold = 10, ignore = [], gitignore = true } = {}) {
   const start = Date.now();
-  const files = traverse(rootDir, { ignore });
+  const files = traverse(rootDir, { ignore, gitignore });
 
   const summary = { totalFiles: 0, byLanguage: {}, totalLines: 0, code: 0, comments: 0, blanks: 0, functions: 0, classes: 0 };
   const flagged = [];

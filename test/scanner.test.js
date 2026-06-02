@@ -23,3 +23,17 @@ test('produces a complete result object', () => {
   assert.ok(Array.isArray(r.complexity.flagged));
   assert.ok(r.skipped.some((s) => s.file.endsWith('broken.ts')));
 });
+
+test('scanner skips gitignored files by default', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'scan-gi-'));
+  fs.mkdirSync(path.join(dir, 'generated'));
+  fs.writeFileSync(path.join(dir, 'a.js'), 'const a = 1;\n');
+  fs.writeFileSync(path.join(dir, 'generated', 'x.js'), 'const x = 1;\n');
+  fs.writeFileSync(path.join(dir, '.gitignore'), 'generated/\n');
+
+  const on = scan(dir);
+  assert.equal(on.summary.byLanguage.JavaScript, 1); // only a.js
+
+  const off = scan(dir, { gitignore: false });
+  assert.equal(off.summary.byLanguage.JavaScript, 2); // a.js + generated/x.js
+});
