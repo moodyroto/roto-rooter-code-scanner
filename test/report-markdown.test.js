@@ -35,3 +35,24 @@ test('escapes pipe characters in table cells', () => {
   const md = toMarkdown(r);
   assert.ok(md.includes('a \\| b \\| c'));
 });
+
+test('renders duplication clusters with locations and a fenced snippet', () => {
+  const r = {
+    meta: { target: '/x', scannedAt: 'now', durationMs: 1 },
+    summary: { totalFiles: 2, byLanguage: { JavaScript: 2 }, totalLines: 20, code: 18, comments: 1, blanks: 1, functions: 2, classes: 0 },
+    complexity: { threshold: 10, avg: 1, max: 1, flagged: [] },
+    duplication: { percentage: 30, clusters: [
+      { lines: 6, kind: 'near', snippet: 'function calc(a, b) {\n  return a + b;', snippetOmitted: 0,
+        occurrences: [{ file: 'src/a.js', startLine: 1, endLine: 6 }, { file: 'src/b.js', startLine: 10, endLine: 15 }] },
+    ] },
+    secrets: { findings: [] },
+    score: { value: 80, grade: 'B', breakdown: { secrets: 0, complexity: 0, duplication: -15 } },
+    skipped: [],
+  };
+  const md = toMarkdown(r);
+  assert.ok(md.includes('## Duplication: 30%'));
+  assert.ok(md.includes('### Cluster 1 — near · 6 lines · 2 places'));
+  assert.ok(md.includes('- src/a.js:1-6'));
+  assert.ok(md.includes('- src/b.js:10-15'));
+  assert.ok(md.includes('function calc(a, b) {'));
+});
