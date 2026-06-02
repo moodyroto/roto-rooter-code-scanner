@@ -42,3 +42,8 @@ test('parseArgs defaults gitignore true and --no-gitignore disables it', () => {
   assert.equal(parseArgs(['/d']).gitignore, true);
   assert.equal(parseArgs(['/d', '--no-gitignore']).gitignore, false);
 });
+
+test('parseArgs defaults includeTests false and --include-tests enables it', () => {
+  assert.equal(parseArgs(['/d']).includeTests, false);
+  assert.equal(parseArgs(['/d', '--include-tests']).includeTests, true);
+});
