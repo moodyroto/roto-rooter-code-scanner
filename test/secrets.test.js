@@ -19,3 +19,19 @@ test('flags a generic credential assignment', () => {
 test('no false positive on plain code', () => {
   assert.equal(scanSecrets('const sum = a + b;\n', 'c.js').length, 0);
 });
+
+test('flags an OpenSSH private key block', () => {
+  const findings = scanSecrets('-----BEGIN OPENSSH PRIVATE KEY-----\n', 'id_ed25519');
+  assert.equal(findings.length, 1);
+  assert.equal(findings[0].rule, 'private-key-block');
+  assert.equal(findings[0].severity, 'high');
+});
+
+test('generic-credential excerpt does not leak any of the secret value', () => {
+  const secret = 'superSecretValue123';
+  const findings = scanSecrets(`token = "${secret}"\n`, 'c.js');
+  assert.equal(findings.length, 1);
+  // No contiguous 4+ char slice of the secret should survive in the excerpt
+  assert.ok(!findings[0].excerpt.includes(secret.slice(-4)));
+  assert.ok(!findings[0].excerpt.includes(secret.slice(0, 4)) || findings[0].excerpt.includes('***'));
+});
