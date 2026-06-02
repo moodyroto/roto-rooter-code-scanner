@@ -6,6 +6,7 @@ function normToken(t) {
   if (type === 'name') return 'ID';
   if (type === 'num') return 'NUM';
   if (type === 'string' || type === 'template') return 'STR';
+  if (type === '`') return 'STR';
   return t.value ?? type;
 }
 

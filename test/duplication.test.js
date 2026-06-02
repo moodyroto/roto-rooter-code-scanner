@@ -22,6 +22,29 @@ test('detects a duplicated block across two files and reports percentage', () =>
   assert.equal(res.clusters[0].occurrences.length, 2);
 });
 
+test('detects near-duplicate blocks with renamed identifiers', () => {
+  const a = `function alpha(one, two) {
+  const sum = one + two;
+  const dbl = sum * 2;
+  const adj = dbl - one;
+  return adj + two;
+}`;
+  const b = `function beta(x, y) {
+  const total = x + y;
+  const twice = total * 2;
+  const fixed = twice - x;
+  return fixed + y;
+}`;
+  const fa = parseFile(a, 'a.js');
+  const fb = parseFile(b, 'b.js');
+  const res = findDuplication([
+    { file: 'a.js', content: a, tokens: fa.tokens },
+    { file: 'b.js', content: b, tokens: fb.tokens },
+  ], { minLines: 5 });
+  assert.ok(res.clusters.length >= 1, 'expected at least one cluster');
+  assert.equal(res.clusters[0].kind, 'near');
+});
+
 test('no duplication on unique files', () => {
   const a = parseFile('const a = 1;\nconst b = 2;\n', 'a.js');
   const res = findDuplication([{ file: 'a.js', content: 'const a = 1;\nconst b = 2;\n', tokens: a.tokens }]);
