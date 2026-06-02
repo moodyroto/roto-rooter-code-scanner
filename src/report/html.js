@@ -27,29 +27,14 @@ function rows(headers, data) {
   return `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
 }
 
-function dupDetails(clusters) {
-  if (!clusters.length) return '<p><em>none</em></p>';
-  const shown = clusters.slice(0, 50);
-  const items = shown.map((c) => {
-    const locs = c.occurrences.map((o) => `${esc(o.file)}:${o.startLine}-${o.endLine}`).join(' ⇄ ');
-    const more = c.snippetOmitted > 0 ? `\n… ${c.snippetOmitted} more lines` : '';
-    return `<details><summary>${esc(c.kind)} · ${c.lines} lines · ${c.occurrences.length} places</summary>`
-      + `<div class="dup-locs">${locs}</div>`
-      + `<pre><code>${esc(c.snippet + more)}</code></pre></details>`;
-  }).join('\n');
-  const extra = clusters.length > 50 ? `<p>… and ${clusters.length - 50} more clusters (see report.json)</p>` : '';
-  return items + extra;
-}
-
 export function toHtml(result) {
-  const { meta, summary, complexity, duplication, secrets, score, skipped } = result;
+  const { meta, summary, complexity, secrets, score, skipped } = result;
   return `<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><title>Code Scan Report</title>
 <style>
 body{font-family:system-ui,sans-serif;margin:2rem;color:#222}
 table{border-collapse:collapse;margin:.5rem 0}th,td{border:1px solid #ddd;padding:4px 8px;font-size:13px;text-align:left}
 .cards{display:flex;gap:2rem;align-items:center}section{margin:1.5rem 0}
-summary{cursor:pointer}details{margin:.4rem 0}pre{background:#f6f8fa;padding:8px;overflow:auto;font-size:12px}.dup-locs{font-size:13px;margin:4px 0;color:#555}
 </style></head><body>
 <h1>Code Scan Report</h1>
 <p><strong>Target:</strong> ${esc(meta.target)} — ${esc(meta.scannedAt)} (${meta.durationMs} ms)</p>
@@ -62,8 +47,6 @@ summary{cursor:pointer}details{margin:.4rem 0}pre{background:#f6f8fa;padding:8px
 <section><h2>Cyclomatic Complexity (threshold ${complexity.threshold})</h2>
 ${barChart(complexity.flagged.slice(0, 10).map((f) => [`${f.name} (${f.file})`, f.score]))}
 ${rows(['Function', 'File', 'Line', 'Score', 'Band'], complexity.flagged.map((f) => [f.name, f.file, f.line, f.score, f.band]))}</section>
-<section><h2>Duplication: ${duplication.percentage}%</h2>
-${dupDetails(duplication.clusters)}</section>
 <section><h2>Secrets</h2>
 ${rows(['Rule', 'Severity', 'File', 'Line', 'Excerpt'], secrets.findings.map((s) => [s.rule, s.severity, s.file, s.line, s.excerpt]))}</section>
 <section><h2>Skipped</h2>
