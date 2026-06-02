@@ -55,3 +55,43 @@ test('no duplication on unique files', () => {
 test('normalizeLines tolerates missing tokens', () => {
   assert.deepEqual(normalizeLines('const a = 1;\n', undefined), []);
 });
+
+test('merges overlapping windows into one maximal block with a snippet', () => {
+  const lines = ['function calc(a, b) {'];
+  for (let i = 0; i < 8; i += 1) lines.push(`  const v${i} = a + b + ${i};`);
+  lines.push('  return v0;', '}');
+  const block = lines.join('\n'); // 11 lines
+  const fa = parseFile(block, 'a.js');
+  const fb = parseFile(block, 'b.js');
+  const res = findDuplication([
+    { file: 'a.js', content: block, tokens: fa.tokens },
+    { file: 'b.js', content: block, tokens: fb.tokens },
+  ], { minLines: 5 });
+
+  assert.equal(res.clusters.length, 1);
+  const c = res.clusters[0];
+  assert.equal(c.lines, 11);
+  assert.equal(c.occurrences.length, 2);
+  assert.deepEqual(c.occurrences[0], { file: 'a.js', startLine: 1, endLine: 11 });
+  assert.equal(c.kind, 'exact');
+  assert.ok(c.snippet.startsWith('function calc(a, b) {'));
+  assert.equal(c.snippetOmitted, 0);
+});
+
+test('caps the snippet at 20 lines and reports the omitted count', () => {
+  const lines = ['function big() {'];
+  for (let i = 0; i < 28; i += 1) lines.push(`  const v${i} = ${i} + 1;`);
+  lines.push('}');
+  const block = lines.join('\n'); // 30 lines
+  const fa = parseFile(block, 'a.js');
+  const fb = parseFile(block, 'b.js');
+  const res = findDuplication([
+    { file: 'a.js', content: block, tokens: fa.tokens },
+    { file: 'b.js', content: block, tokens: fb.tokens },
+  ], { minLines: 5 });
+
+  const c = res.clusters[0];
+  assert.equal(c.lines, 30);
+  assert.equal(c.snippet.split('\n').length, 20);
+  assert.equal(c.snippetOmitted, 10);
+});
