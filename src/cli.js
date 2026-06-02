@@ -7,7 +7,7 @@ import { toMarkdown } from './report/markdown.js';
 import { toHtml } from './report/html.js';
 
 export function parseArgs(argv) {
-  const args = { directory: null, out: 'scan-report', formats: ['json', 'md', 'html'], threshold: 10, ignore: [] };
+  const args = { directory: null, out: 'scan-report', formats: ['json', 'md', 'html'], threshold: 10, ignore: [], gitignore: true };
   const valueFor = (flag, i) => {
     const v = argv[i + 1];
     if (v === undefined || v.startsWith('--')) throw new Error(`Missing value for ${flag}`);
@@ -24,13 +24,14 @@ export function parseArgs(argv) {
       args.threshold = n;
     }
     else if (a === '--ignore') { args.ignore.push(valueFor(a, i)); i += 1; }
+    else if (a === '--no-gitignore') args.gitignore = false;
     else if (a === '--help') args.help = true;
     else if (!a.startsWith('--') && args.directory === null) args.directory = a;
   }
   return args;
 }
 
-const HELP = `Usage: code-scanner <directory> [--out dir] [--format json,md,html] [--threshold n] [--ignore glob]`;
+const HELP = `Usage: code-scanner <directory> [--out dir] [--format json,md,html] [--threshold n] [--ignore name] [--no-gitignore]`;
 
 export async function main(argv) {
   let args;
@@ -42,7 +43,7 @@ export async function main(argv) {
     console.error(`Error: not a directory: ${args.directory}`); return 1;
   }
 
-  const result = scan(args.directory, { threshold: args.threshold, ignore: args.ignore });
+  const result = scan(args.directory, { threshold: args.threshold, ignore: args.ignore, gitignore: args.gitignore });
   fs.mkdirSync(args.out, { recursive: true });
   if (args.formats.includes('json')) fs.writeFileSync(path.join(args.out, 'report.json'), toJson(result));
   if (args.formats.includes('md')) fs.writeFileSync(path.join(args.out, 'report.md'), toMarkdown(result));

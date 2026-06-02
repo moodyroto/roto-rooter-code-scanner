@@ -37,3 +37,8 @@ test('main returns 1 when a flag is missing its value', async () => {
   const code = await main(['/tmp', '--out']);
   assert.equal(code, 1);
 });
+
+test('parseArgs defaults gitignore true and --no-gitignore disables it', () => {
+  assert.equal(parseArgs(['/d']).gitignore, true);
+  assert.equal(parseArgs(['/d', '--no-gitignore']).gitignore, false);
+});
