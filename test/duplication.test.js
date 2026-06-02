@@ -121,3 +121,25 @@ test('keeps a block with interior blank lines as one cluster spanning the blanks
   assert.equal(c.lines, 8);
   assert.ok(c.snippet.includes('const z = y - a;'));
 });
+
+test('percentage counts code lines only and never exceeds 100', () => {
+  // Two files that are entirely a single duplicated function with interior blank lines.
+  const block = [
+    'function withGaps(a, b) {',
+    '  const x = a + b;',
+    '',
+    '  const y = x * 2;',
+    '',
+    '  const z = y - a;',
+    '  return z;',
+    '}',
+  ].join('\n');
+  const fa = parseFile(block, 'a.js');
+  const fb = parseFile(block, 'b.js');
+  const res = findDuplication([
+    { file: 'a.js', content: block, tokens: fa.tokens },
+    { file: 'b.js', content: block, tokens: fb.tokens },
+  ], { minLines: 5 });
+  assert.ok(res.percentage <= 100, `percentage should be <= 100, got ${res.percentage}`);
+  assert.equal(res.percentage, 100); // both files are 100% duplicated code
+});

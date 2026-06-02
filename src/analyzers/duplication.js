@@ -77,6 +77,7 @@ export function findDuplication(fileEntries, { minLines = 5 } = {}) {
 
   // Merge consecutive classes (each step shifts every startIdx by +1) into maximal blocks.
   const blocks = [];
+  const dupCodeLines = new Set(); // `${file}:${codeLineIndex}` — counts duplicated CODE lines only
   for (const headOcc of classBySig.values()) {
     if (classBySig.has(sigOf(headOcc, -1))) continue; // only start from a chain head
     let lastOcc = headOcc;
@@ -86,6 +87,7 @@ export function findDuplication(fileEntries, { minLines = 5 } = {}) {
     const occurrences = headOcc.map((h, k) => {
       const lines = fileLines.get(h.file);
       const endIdx = lastOcc[k].startIdx + minLines - 1; // last code line of the tail window
+      for (let idx = h.startIdx; idx <= endIdx; idx += 1) dupCodeLines.add(`${h.file}:${idx}`);
       return { file: h.file, startLine: lines[h.startIdx].n, endLine: lines[endIdx].n };
     });
     blocks.push(occurrences);
@@ -104,13 +106,7 @@ export function findDuplication(fileEntries, { minLines = 5 } = {}) {
 
   clusters.sort((a, b) => (b.lines * b.occurrences.length) - (a.lines * a.occurrences.length));
 
-  const dupLineKeys = new Set();
-  for (const c of clusters) {
-    for (const o of c.occurrences) {
-      for (let n = o.startLine; n <= o.endLine; n += 1) dupLineKeys.add(`${o.file}:${n}`);
-    }
-  }
-  const percentage = totalCodeLines === 0 ? 0 : Number(((dupLineKeys.size / totalCodeLines) * 100).toFixed(2));
+  const percentage = totalCodeLines === 0 ? 0 : Number(((dupCodeLines.size / totalCodeLines) * 100).toFixed(2));
 
   return { percentage, clusters };
 }
