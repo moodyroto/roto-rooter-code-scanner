@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parseFile } from '../src/analyzers/ast.js';
-import { findDuplication } from '../src/analyzers/duplication.js';
+import { findDuplication, normalizeLines } from '../src/analyzers/duplication.js';
 
 const block = `function calc(a, b) {
   const x = a + b;
@@ -50,4 +50,8 @@ test('no duplication on unique files', () => {
   const res = findDuplication([{ file: 'a.js', content: 'const a = 1;\nconst b = 2;\n', tokens: a.tokens }]);
   assert.equal(res.percentage, 0);
   assert.equal(res.clusters.length, 0);
+});
+
+test('normalizeLines tolerates missing tokens', () => {
+  assert.deepEqual(normalizeLines('const a = 1;\n', undefined), []);
 });

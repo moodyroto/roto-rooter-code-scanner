@@ -13,7 +13,7 @@ function normToken(t) {
 export function normalizeLines(content, tokens) {
   const rawLines = content.split('\n');
   const byLine = new Map(); // line -> normalized token strings
-  for (const t of tokens) {
+  for (const t of tokens ?? []) {
     if (!t.loc || (t.type?.label ?? t.type) === 'eof') continue;
     const ln = t.loc.start.line;
     if (!byLine.has(ln)) byLine.set(ln, []);

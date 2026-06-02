@@ -19,7 +19,7 @@ export function scanSecrets(content, filePath) {
         const sensitive = m[1] ?? m[0]; // redact the captured value when present, else the whole match
         findings.push({
           file: filePath, line: i + 1, rule: rule.name, severity: rule.severity,
-          excerpt: line.trim().replace(sensitive, redact(sensitive)).slice(0, 120),
+          excerpt: line.trim().replaceAll(sensitive, redact(sensitive)).slice(0, 120),
         });
       }
     }

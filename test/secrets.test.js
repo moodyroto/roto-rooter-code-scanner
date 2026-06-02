@@ -35,3 +35,12 @@ test('generic-credential excerpt does not leak any of the secret value', () => {
   assert.ok(!findings[0].excerpt.includes(secret.slice(-4)));
   assert.ok(!findings[0].excerpt.includes(secret.slice(0, 4)) || findings[0].excerpt.includes('***'));
 });
+
+test('redacts every occurrence of a repeated secret on one line', () => {
+  const secret = 'superSecretValue123';
+  const findings = scanSecrets(`token = "${secret}"; var copy = "${secret}";\n`, 'c.js');
+  assert.ok(findings.length >= 1);
+  for (const f of findings) {
+    assert.ok(!f.excerpt.includes(secret), `excerpt leaked secret: ${f.excerpt}`);
+  }
+});
