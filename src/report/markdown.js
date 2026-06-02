@@ -1,6 +1,10 @@
+function escCell(v) {
+  return String(v).replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
+}
+
 function table(headers, rows) {
   const head = `| ${headers.join(' | ')} |\n| ${headers.map(() => '---').join(' | ')} |`;
-  const body = rows.map((r) => `| ${r.join(' | ')} |`).join('\n');
+  const body = rows.map((r) => `| ${r.map(escCell).join(' | ')} |`).join('\n');
   return rows.length ? `${head}\n${body}` : '_none_';
 }
 

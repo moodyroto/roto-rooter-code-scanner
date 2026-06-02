@@ -28,7 +28,7 @@ function rows(headers, data) {
 }
 
 export function toHtml(result) {
-  const { meta, summary, complexity, duplication, secrets, score } = result;
+  const { meta, summary, complexity, duplication, secrets, score, skipped } = result;
   return `<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><title>Code Scan Report</title>
 <style>
@@ -51,5 +51,7 @@ ${rows(['Function', 'File', 'Line', 'Score', 'Band'], complexity.flagged.map((f)
 ${rows(['Kind', 'Lines', 'Occurrences'], duplication.clusters.map((c) => [c.kind, c.lines, c.occurrences.length]))}</section>
 <section><h2>Secrets</h2>
 ${rows(['Rule', 'Severity', 'File', 'Line', 'Excerpt'], secrets.findings.map((s) => [s.rule, s.severity, s.file, s.line, s.excerpt]))}</section>
+<section><h2>Skipped</h2>
+${rows(['File', 'Reason'], skipped.map((s) => [s.file, s.reason]))}</section>
 </body></html>`;
 }

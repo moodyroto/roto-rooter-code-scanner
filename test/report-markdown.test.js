@@ -21,3 +21,17 @@ test('renders headline score and feature sections', () => {
   assert.ok(md.includes('Secrets'));
   assert.ok(md.includes('| f |') || md.includes('`f`'));
 });
+
+test('escapes pipe characters in table cells', () => {
+  const r = {
+    meta: { target: '/x', scannedAt: 'now', durationMs: 1 },
+    summary: { totalFiles: 0, byLanguage: {}, totalLines: 0, code: 0, comments: 0, blanks: 0, functions: 0, classes: 0 },
+    complexity: { threshold: 10, avg: 0, max: 0, flagged: [] },
+    duplication: { percentage: 0, clusters: [] },
+    secrets: { findings: [{ rule: 'r', severity: 'high', file: 'a.js', line: 1, excerpt: 'a | b | c' }] },
+    score: { value: 50, grade: 'F', breakdown: { secrets: -50, complexity: 0, duplication: 0 } },
+    skipped: [],
+  };
+  const md = toMarkdown(r);
+  assert.ok(md.includes('a \\| b \\| c'));
+});

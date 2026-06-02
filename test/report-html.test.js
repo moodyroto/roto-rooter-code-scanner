@@ -19,3 +19,18 @@ test('produces self-contained HTML with inline SVG and no external script src', 
   assert.ok(html.includes('88'));
   assert.ok(!html.includes('http://') && !html.includes('https://')); // no CDN
 });
+
+test('renders a skipped section', () => {
+  const r = {
+    meta: { target: '/x', scannedAt: 'now', durationMs: 1 },
+    summary: { totalFiles: 1, byLanguage: { JavaScript: 1 }, totalLines: 1, code: 1, comments: 0, blanks: 0, functions: 0, classes: 0 },
+    complexity: { threshold: 10, avg: 0, max: 0, flagged: [] },
+    duplication: { percentage: 0, clusters: [] },
+    secrets: { findings: [] },
+    score: { value: 100, grade: 'A', breakdown: { secrets: 0, complexity: 0, duplication: 0 } },
+    skipped: [{ file: 'broken.ts', reason: 'parseError: x' }],
+  };
+  const html = toHtml(r);
+  assert.ok(html.includes('Skipped'));
+  assert.ok(html.includes('broken.ts'));
+});
