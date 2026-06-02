@@ -8,12 +8,22 @@ import { toHtml } from './report/html.js';
 
 export function parseArgs(argv) {
   const args = { directory: null, out: 'scan-report', formats: ['json', 'md', 'html'], threshold: 10, ignore: [] };
+  const valueFor = (flag, i) => {
+    const v = argv[i + 1];
+    if (v === undefined || v.startsWith('--')) throw new Error(`Missing value for ${flag}`);
+    return v;
+  };
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
-    if (a === '--out') args.out = argv[++i];
-    else if (a === '--format') args.formats = argv[++i].split(',').map((s) => s.trim());
-    else if (a === '--threshold') args.threshold = Number(argv[++i]);
-    else if (a === '--ignore') args.ignore.push(argv[++i]);
+    if (a === '--out') { args.out = valueFor(a, i); i += 1; }
+    else if (a === '--format') { args.formats = valueFor(a, i).split(',').map((s) => s.trim()).filter(Boolean); i += 1; }
+    else if (a === '--threshold') {
+      const raw = valueFor(a, i); i += 1;
+      const n = Number(raw);
+      if (!Number.isFinite(n)) throw new Error(`--threshold must be a number, got "${raw}"`);
+      args.threshold = n;
+    }
+    else if (a === '--ignore') { args.ignore.push(valueFor(a, i)); i += 1; }
     else if (a === '--help') args.help = true;
     else if (!a.startsWith('--') && args.directory === null) args.directory = a;
   }
@@ -23,7 +33,9 @@ export function parseArgs(argv) {
 const HELP = `Usage: code-scanner <directory> [--out dir] [--format json,md,html] [--threshold n] [--ignore glob]`;
 
 export async function main(argv) {
-  const args = parseArgs(argv);
+  let args;
+  try { args = parseArgs(argv); }
+  catch (err) { console.error(`Error: ${err.message}\n${HELP}`); return 1; }
   if (args.help) { console.log(HELP); return 0; }
   if (!args.directory) { console.error('Error: directory path is required\n' + HELP); return 1; }
   if (!fs.existsSync(args.directory) || !fs.statSync(args.directory).isDirectory()) {

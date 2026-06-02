@@ -28,3 +28,12 @@ test('main returns 1 for a missing directory', async () => {
   const code = await main(['/no/such/dir/here']);
   assert.equal(code, 1);
 });
+
+test('parseArgs throws on non-numeric threshold', () => {
+  assert.throws(() => parseArgs(['/d', '--threshold', 'abc']), /must be a number/);
+});
+
+test('main returns 1 when a flag is missing its value', async () => {
+  const code = await main(['/tmp', '--out']);
+  assert.equal(code, 1);
+});
