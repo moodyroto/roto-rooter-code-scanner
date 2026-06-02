@@ -37,3 +37,15 @@ test('scanner skips gitignored files by default', () => {
   const off = scan(dir, { gitignore: false });
   assert.equal(off.summary.byLanguage.JavaScript, 2); // a.js + generated/x.js
 });
+
+test('scanner skips test files by default', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'scan-test-'));
+  fs.writeFileSync(path.join(dir, 'a.js'), 'const a = 1;\n');
+  fs.writeFileSync(path.join(dir, 'a.test.js'), 'const t = 1;\n');
+
+  const def = scan(dir);
+  assert.equal(def.summary.byLanguage.JavaScript, 1); // only a.js
+
+  const all = scan(dir, { includeTests: true });
+  assert.equal(all.summary.byLanguage.JavaScript, 2); // a.js + a.test.js
+});
