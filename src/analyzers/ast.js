@@ -29,6 +29,7 @@ export function countDefinitions(ast) {
 export function commentLineNumbers(comments) {
   const set = new Set();
   for (const c of comments) {
+    if (!c.loc) continue;
     for (let n = c.loc.start.line; n <= c.loc.end.line; n += 1) set.add(n);
   }
   return set;

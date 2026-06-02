@@ -20,3 +20,7 @@ test('commentLineNumbers maps comment lines', () => {
   const r = parseFile('// hi\nconst a = 1;\n', 'x.js');
   assert.deepEqual([...commentLineNumbers(r.comments)], [1]);
 });
+
+test('commentLineNumbers ignores comments without loc', () => {
+  assert.deepEqual([...commentLineNumbers([{ value: 'x' }])], []);
+});
