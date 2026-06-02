@@ -8,14 +8,14 @@ function gradeFor(value) {
   return 'F';
 }
 
-export function scoreResult({ complexity, secrets }) {
-  const secretsPenalty = -(secrets.findings.reduce((sum, f) => sum + 15 * (SEVERITY_MULT[f.severity] ?? 0.3), 0));
+export function scoreResult({ complexity, security }) {
+  const securityPenalty = -(security.findings.reduce((sum, f) => sum + 15 * (SEVERITY_MULT[f.severity] ?? 0.3), 0));
   const complexityPenalty = -(complexity.flagged.reduce((sum, f) => sum + (f.band === 'high-risk' ? 8 : 3), 0));
   const breakdown = {
-    secrets: Number(secretsPenalty.toFixed(2)),
+    security: Number(securityPenalty.toFixed(2)),
     complexity: Number(complexityPenalty.toFixed(2)),
   };
-  const raw = 100 + breakdown.secrets + breakdown.complexity;
+  const raw = 100 + breakdown.security + breakdown.complexity;
   const value = Math.max(0, Math.min(100, Math.round(raw)));
   return { value, grade: gradeFor(value), breakdown };
 }

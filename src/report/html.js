@@ -28,7 +28,7 @@ function rows(headers, data) {
 }
 
 export function toHtml(result) {
-  const { meta, summary, complexity, secrets, score, skipped } = result;
+  const { meta, summary, complexity, security, score, skipped } = result;
   return `<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><title>Code Scan Report</title>
 <style>
@@ -47,8 +47,8 @@ table{border-collapse:collapse;margin:.5rem 0}th,td{border:1px solid #ddd;paddin
 <section><h2>Cyclomatic Complexity (threshold ${complexity.threshold})</h2>
 ${barChart(complexity.flagged.slice(0, 10).map((f) => [`${f.name} (${f.file})`, f.score]))}
 ${rows(['Function', 'File', 'Line', 'Score', 'Band'], complexity.flagged.map((f) => [f.name, f.file, f.line, f.score, f.band]))}</section>
-<section><h2>Secrets</h2>
-${rows(['Rule', 'Severity', 'File', 'Line', 'Excerpt'], secrets.findings.map((s) => [s.rule, s.severity, s.file, s.line, s.excerpt]))}</section>
+<section><h2>Security</h2>
+${rows(['Kind', 'Rule', 'Severity', 'File', 'Line', 'Excerpt'], security.findings.map((s) => [s.kind, s.rule, s.severity, s.file, s.line, s.excerpt]))}</section>
 <section><h2>Skipped</h2>
 ${rows(['File', 'Reason'], skipped.map((s) => [s.file, s.reason]))}</section>
 </body></html>`;

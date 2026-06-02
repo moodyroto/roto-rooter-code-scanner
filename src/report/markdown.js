@@ -9,7 +9,7 @@ function table(headers, rows) {
 }
 
 export function toMarkdown(result) {
-  const { meta, summary, complexity, secrets, score, skipped } = result;
+  const { meta, summary, complexity, security, score, skipped } = result;
   const langRows = Object.entries(summary.byLanguage).map(([k, v]) => [k, String(v)]);
   return `# Code Scan Report
 
@@ -18,7 +18,7 @@ export function toMarkdown(result) {
 
 ## Score: ${score.value} / 100 — Grade: ${score.grade}
 
-Penalties — secrets: ${score.breakdown.secrets}, complexity: ${score.breakdown.complexity}
+Penalties — security: ${score.breakdown.security}, complexity: ${score.breakdown.complexity}
 
 ## Summary
 
@@ -32,8 +32,8 @@ ${table(['Language', 'Files'], langRows)}
 ## Cyclomatic Complexity (threshold ${complexity.threshold}, avg ${complexity.avg}, max ${complexity.max})
 ${table(['Function', 'File', 'Line', 'Score', 'Band'], complexity.flagged.map((f) => [`\`${f.name}\``, f.file, String(f.line), String(f.score), f.band]))}
 
-## Secrets
-${table(['Rule', 'Severity', 'File', 'Line', 'Excerpt'], secrets.findings.map((s) => [s.rule, s.severity, s.file, String(s.line), s.excerpt]))}
+## Security
+${table(['Kind', 'Rule', 'Severity', 'File', 'Line', 'Excerpt'], security.findings.map((s) => [s.kind, s.rule, s.severity, s.file, String(s.line), s.excerpt]))}
 
 ## Skipped
 ${table(['File', 'Reason'], skipped.map((s) => [s.file, s.reason]))}
