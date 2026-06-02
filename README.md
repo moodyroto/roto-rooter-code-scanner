@@ -19,7 +19,6 @@ Outputs `report.json`, `report.md`, and `report.html` in the output directory (d
 ## Features
 - Basic metrics: files, lines (code/comments/blanks), functions, classes
 - Cyclomatic complexity (flags functions over the threshold)
-- Code duplication (near-duplicate detection + percentage)
 - Secret scanning (redacted findings)
 - Quality score (0–100 + letter grade)
 
