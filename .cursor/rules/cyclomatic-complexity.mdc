@@ -1,0 +1,50 @@
+---
+description: Flag functions whose cyclomatic complexity exceeds a medium threshold
+globs:
+  - "**/*.js"
+  - "**/*.mjs"
+  - "**/*.cjs"
+  - "**/*.ts"
+alwaysApply: false
+---
+
+# Cyclomatic Complexity (Medium Sensitivity)
+
+Analyze every function/method for cyclomatic complexity and flag any that are too
+branchy. Use a **medium** sensitivity threshold.
+
+## Threshold
+
+- **Flag** any function with cyclomatic complexity **> 10**.
+- 1–10 → OK (simple to moderate)
+- 11–20 → **Flag: refactor recommended**
+- 21+ → **Flag: high risk, refactor strongly recommended**
+
+## How to compute complexity
+
+Start at 1, then add 1 for each of the following decision points inside the function:
+
+- `if`, `else if`
+- `for`, `for...of`, `for...in`, `while`, `do...while`
+- `case` clause in a `switch`
+- `catch` clause
+- ternary `?:`
+- logical `&&` and `||` (and `??`) used in conditions
+- optional chaining short-circuits (`?.`) only when used as a guard
+
+Nested functions are measured independently, not folded into the parent.
+
+## What to report
+
+For each flagged function, report:
+
+- File path and line number
+- Function name (or `<anonymous>` with context)
+- Computed complexity score
+- Which severity band it falls into
+
+## What to recommend
+
+When flagging, suggest concrete reductions: extract helper functions, replace long
+`if/else` chains with lookup tables/early returns, use guard clauses, or split the
+function by responsibility. Do not auto-rewrite unless asked — report first.
