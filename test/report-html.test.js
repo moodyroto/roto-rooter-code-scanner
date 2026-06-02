@@ -34,3 +34,25 @@ test('renders a skipped section', () => {
   assert.ok(html.includes('Skipped'));
   assert.ok(html.includes('broken.ts'));
 });
+
+test('renders duplication clusters as collapsible details with an escaped snippet', () => {
+  const r = {
+    meta: { target: '/x', scannedAt: 'now', durationMs: 1 },
+    summary: { totalFiles: 2, byLanguage: { JavaScript: 2 }, totalLines: 20, code: 18, comments: 1, blanks: 1, functions: 2, classes: 0 },
+    complexity: { threshold: 10, avg: 1, max: 1, flagged: [] },
+    duplication: { percentage: 30, clusters: [
+      { lines: 6, kind: 'near', snippet: 'if (a < b && c) {\n  return "<x>";', snippetOmitted: 0,
+        occurrences: [{ file: 'src/a.js', startLine: 1, endLine: 6 }, { file: 'src/b.js', startLine: 10, endLine: 15 }] },
+    ] },
+    secrets: { findings: [] },
+    score: { value: 80, grade: 'B', breakdown: { secrets: 0, complexity: 0, duplication: -15 } },
+    skipped: [],
+  };
+  const html = toHtml(r);
+  assert.ok(html.includes('<details>'));
+  assert.ok(html.includes('near · 6 lines · 2 places'));
+  assert.ok(html.includes('src/a.js:1-6 ⇄ src/b.js:10-15'));
+  assert.ok(html.includes('&lt;x&gt;'));            // snippet escaped
+  assert.ok(!html.includes('return "<x>"'));         // raw snippet not present
+  assert.ok(!html.includes('http://') && !html.includes('https://'));
+});
