@@ -22,3 +22,10 @@ test('walks recursively and skips default ignores', () => {
   assert.ok(files.includes('readme.md'));
   assert.ok(!files.some((f) => f.includes('node_modules')));
 });
+
+test('returns absolute paths even when given a relative root', () => {
+  const dir = fixture();
+  const rel = path.relative(process.cwd(), dir);
+  const files = traverse(rel, {});
+  assert.ok(files.every((f) => path.isAbsolute(f)));
+});

@@ -7,6 +7,7 @@ const DEFAULT_IGNORE = new Set([
 const BINARY_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.ico', '.pdf', '.zip', '.lock', '.woff', '.woff2']);
 
 export function traverse(rootDir, { ignore = [] } = {}) {
+  rootDir = path.resolve(rootDir);
   const ignoreSet = new Set([...DEFAULT_IGNORE, ...ignore]);
   const out = [];
   const walk = (dir) => {
