@@ -95,3 +95,29 @@ test('caps the snippet at 20 lines and reports the omitted count', () => {
   assert.equal(c.snippet.split('\n').length, 20);
   assert.equal(c.snippetOmitted, 10);
 });
+
+test('keeps a block with interior blank lines as one cluster spanning the blanks', () => {
+  const block = [
+    'function withGaps(a, b) {',
+    '  const x = a + b;',
+    '',
+    '  const y = x * 2;',
+    '',
+    '  const z = y - a;',
+    '  return z;',
+    '}',
+  ].join('\n'); // 8 source lines; blanks at lines 3 and 5
+  const fa = parseFile(block, 'a.js');
+  const fb = parseFile(block, 'b.js');
+  const res = findDuplication([
+    { file: 'a.js', content: block, tokens: fa.tokens },
+    { file: 'b.js', content: block, tokens: fb.tokens },
+  ], { minLines: 5 });
+
+  assert.equal(res.clusters.length, 1);
+  const c = res.clusters[0];
+  assert.equal(c.occurrences[0].startLine, 1);
+  assert.equal(c.occurrences[0].endLine, 8);
+  assert.equal(c.lines, 8);
+  assert.ok(c.snippet.includes('const z = y - a;'));
+});

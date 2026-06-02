@@ -30,14 +30,24 @@ export function normalizeLines(content, tokens) {
 
 function hash(s) { return crypto.createHash('sha1').update(s).digest('hex'); }
 
+// Signature of a window-class: its sorted (file, startIdx) set, optionally shifted by d.
+// startIdx is the CODE-LINE INDEX (position in normalizeLines output), which is always
+// contiguous — so chaining is correct even when source lines have blank-line gaps.
+function sigOf(occ, d = 0) {
+  return JSON.stringify(occ.map((o) => [o.file, o.startIdx + d]));
+}
+
 export function findDuplication(fileEntries, { minLines = 5 } = {}) {
-  // normHash -> { file -> [startLine, ...] } (sorted ascending)
-  const hashToFileStarts = new Map();
+  const fileLines = new Map();    // file -> normalizeLines output (code lines with .n)
   const contentLines = new Map(); // file -> original source lines
   let totalCodeLines = 0;
 
+  // normHash -> Map<file, number[] of start code-line indices (ascending)>
+  const hashToFileStarts = new Map();
+
   for (const { file, content, tokens } of fileEntries) {
     const lines = normalizeLines(content, tokens);
+    fileLines.set(file, lines);
     contentLines.set(file, content.split('\n'));
     totalCodeLines += lines.length;
     for (let i = 0; i + minLines <= lines.length; i += 1) {
@@ -46,59 +56,38 @@ export function findDuplication(fileEntries, { minLines = 5 } = {}) {
       if (!hashToFileStarts.has(normHash)) hashToFileStarts.set(normHash, new Map());
       const byFile = hashToFileStarts.get(normHash);
       if (!byFile.has(file)) byFile.set(file, []);
-      byFile.get(file).push(slice[0].n);
+      byFile.get(file).push(i); // store the code-line INDEX, not the source line number
     }
   }
 
-  // Build window-classes: for each normHash that appears in >=2 files,
-  // pair up occurrences positionally (sorted within each file) to form
-  // individual window-classes, each with exactly one occurrence per file.
-  //
-  // When a hash appears N times in file A and M times in file B,
-  // we pair min(N,M) times (positional pairing). Each pair is one window-class.
-  //
-  // endLine = startLine + minLines - 1 (approximation; actual line numbers from normalizeLines
-  // are 1-based and contiguous so endLine = startLine + minLines - 1).
-  //
-  // We key each window-class by its sorted (file, startLine) signature for chain merging.
-
-  const classBySig = new Map(); // sig -> [{ file, startLine, endLine }]
-
+  // Positional pairing across files: one occurrence per file per window-class, keyed by
+  // its sorted (file, startIdx) signature. (v1 limitation: only cross-file duplication is
+  // reported — a block duplicated within a single file, and asymmetric repeat counts where
+  // the same window recurs unequally across files, are out of scope.)
+  const classBySig = new Map(); // sig -> [{ file, startIdx }]
   for (const byFile of hashToFileStarts.values()) {
     if (byFile.size < 2) continue;
-    const fileEntries2 = [...byFile.entries()].sort(([a], [b]) => (a < b ? -1 : 1));
-    // Find the minimum count across all files
-    const minCount = Math.min(...fileEntries2.map(([, starts]) => starts.length));
-    // Pair positionally: for each index 0..minCount-1, create one window-class
+    const entries = [...byFile.entries()].sort(([a], [b]) => (a < b ? -1 : 1));
+    const minCount = Math.min(...entries.map(([, starts]) => starts.length));
     for (let idx = 0; idx < minCount; idx += 1) {
-      const occurrences = fileEntries2.map(([file, starts]) => ({
-        file,
-        startLine: starts[idx],
-        endLine: starts[idx] + minLines - 1,
-      }));
-      const sig = JSON.stringify(occurrences.map((o) => [o.file, o.startLine]));
-      classBySig.set(sig, occurrences);
+      const occ = entries.map(([file, starts]) => ({ file, startIdx: starts[idx] }));
+      classBySig.set(sigOf(occ), occ);
     }
   }
 
-  // Helper: shift all startLines by d and recompute sig
-  function shiftedSig(occ, d) {
-    return JSON.stringify(occ.map((o) => [o.file, o.startLine + d]));
-  }
-
-  // Merge consecutive classes (each step shifts every start by +1) into maximal blocks.
+  // Merge consecutive classes (each step shifts every startIdx by +1) into maximal blocks.
   const blocks = [];
-  for (const [, headOcc] of classBySig) {
-    if (classBySig.has(shiftedSig(headOcc, -1))) continue; // only start from a chain head
+  for (const headOcc of classBySig.values()) {
+    if (classBySig.has(sigOf(headOcc, -1))) continue; // only start from a chain head
     let lastOcc = headOcc;
-    while (classBySig.has(shiftedSig(lastOcc, 1))) {
-      lastOcc = classBySig.get(shiftedSig(lastOcc, 1));
+    while (classBySig.has(sigOf(lastOcc, 1))) {
+      lastOcc = classBySig.get(sigOf(lastOcc, 1));
     }
-    const occurrences = headOcc.map((h, idx) => ({
-      file: h.file,
-      startLine: h.startLine,
-      endLine: lastOcc[idx].endLine,
-    }));
+    const occurrences = headOcc.map((h, k) => {
+      const lines = fileLines.get(h.file);
+      const endIdx = lastOcc[k].startIdx + minLines - 1; // last code line of the tail window
+      return { file: h.file, startLine: lines[h.startIdx].n, endLine: lines[endIdx].n };
+    });
     blocks.push(occurrences);
   }
 
