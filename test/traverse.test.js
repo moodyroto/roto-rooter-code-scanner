@@ -46,3 +46,26 @@ test('respects root .gitignore by default and can be disabled', () => {
   const off = traverse(dir, { gitignore: false }).map((f) => path.relative(dir, f));
   assert.ok(off.includes(path.join('generated', 'x.js')));
 });
+
+test('skips test files by default and can include them', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'trav-test-'));
+  fs.mkdirSync(path.join(dir, '__tests__'));
+  fs.mkdirSync(path.join(dir, 'sub'));
+  fs.writeFileSync(path.join(dir, 'a.js'), '1');
+  fs.writeFileSync(path.join(dir, 'a.test.js'), '1');
+  fs.writeFileSync(path.join(dir, '__tests__', 'b.js'), '1');
+  fs.writeFileSync(path.join(dir, 'sub', 'c.spec.ts'), '1');
+  fs.writeFileSync(path.join(dir, 'sub', 'd.ts'), '1');
+
+  const def = traverse(dir, {}).map((f) => path.relative(dir, f));
+  assert.ok(def.includes('a.js'));
+  assert.ok(def.includes(path.join('sub', 'd.ts')));
+  assert.ok(!def.includes('a.test.js'));
+  assert.ok(!def.some((f) => f.includes('__tests__')));
+  assert.ok(!def.includes(path.join('sub', 'c.spec.ts')));
+
+  const all = traverse(dir, { includeTests: true }).map((f) => path.relative(dir, f));
+  assert.ok(all.includes('a.test.js'));
+  assert.ok(all.includes(path.join('__tests__', 'b.js')));
+  assert.ok(all.includes(path.join('sub', 'c.spec.ts')));
+});
