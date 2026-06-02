@@ -19,6 +19,7 @@ export function traverse(rootDir, { ignore = [], gitignore = true, includeTests 
       const full = path.join(dir, entry.name);
       const rel = path.relative(rootDir, full);
       if (isIgnored(matcher, rel)) continue;
+      // Runs before the recurse branch below, so __tests__/__mocks__ dirs are pruned, not descended.
       if (!includeTests && isTestFile(rel)) continue;
       if (entry.isDirectory()) walk(full);
       else if (entry.isFile() && !BINARY_EXT.has(path.extname(entry.name).toLowerCase())) out.push(full);
