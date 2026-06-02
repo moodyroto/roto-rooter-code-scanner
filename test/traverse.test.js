@@ -29,3 +29,20 @@ test('returns absolute paths even when given a relative root', () => {
   const files = traverse(rel, {});
   assert.ok(files.every((f) => path.isAbsolute(f)));
 });
+
+test('respects root .gitignore by default and can be disabled', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'trav-gi-'));
+  fs.mkdirSync(path.join(dir, 'generated'));
+  fs.writeFileSync(path.join(dir, 'a.js'), '1');
+  fs.writeFileSync(path.join(dir, 'generated', 'x.js'), '1');
+  fs.writeFileSync(path.join(dir, 'debug.log'), '1');
+  fs.writeFileSync(path.join(dir, '.gitignore'), 'generated/\n*.log\n');
+
+  const on = traverse(dir, {}).map((f) => path.relative(dir, f));
+  assert.ok(on.includes('a.js'));
+  assert.ok(!on.some((f) => f.startsWith('generated')));
+  assert.ok(!on.includes('debug.log'));
+
+  const off = traverse(dir, { gitignore: false }).map((f) => path.relative(dir, f));
+  assert.ok(off.includes(path.join('generated', 'x.js')));
+});
