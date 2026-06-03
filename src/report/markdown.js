@@ -9,7 +9,7 @@ function table(headers, rows) {
 }
 
 export function toMarkdown(result) {
-  const { meta, summary, complexity, security, score, skipped } = result;
+  const { meta, summary, complexity, security, dependencies, score, skipped } = result;
   const langRows = Object.entries(summary.byLanguage).map(([k, v]) => [k, String(v)]);
   return `# Code Scan Report
 
@@ -18,7 +18,7 @@ export function toMarkdown(result) {
 
 ## Score: ${score.value} / 100 — Grade: ${score.grade}
 
-Penalties — security: ${score.breakdown.security}, complexity: ${score.breakdown.complexity}
+Penalties — security: ${score.breakdown.security}, complexity: ${score.breakdown.complexity}, dependencies: ${score.breakdown.dependencies}
 
 ## Summary
 
@@ -31,6 +31,15 @@ ${table(['Language', 'Files'], langRows)}
 
 ## Cyclomatic Complexity (threshold ${complexity.threshold}, avg ${complexity.avg}, max ${complexity.max})
 ${table(['Function', 'File', 'Line', 'Score', 'Band'], complexity.flagged.map((f) => [`\`${f.name}\``, f.file, String(f.line), String(f.score), f.band]))}
+
+## Dependencies
+Modules: ${dependencies.summary.modules} · Internal edges: ${dependencies.summary.internalEdges} · External imports: ${dependencies.summary.externalImports}
+
+### Circular dependencies (${dependencies.cycles.length})
+${table(['Cycle', 'Files'], dependencies.cycles.map((c, i) => [String(i + 1), c.files.join(', ')]))}
+
+### Most imported
+${table(['File', 'Imported by'], dependencies.mostImported.map((m) => [m.file, String(m.importedBy)]))}
 
 ## Security
 ${table(['Kind', 'Rule', 'Severity', 'File', 'Line', 'Excerpt'], security.findings.map((s) => [s.kind, s.rule, s.severity, s.file, String(s.line), s.excerpt]))}

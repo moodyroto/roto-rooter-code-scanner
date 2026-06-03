@@ -28,7 +28,7 @@ function rows(headers, data) {
 }
 
 export function toHtml(result) {
-  const { meta, summary, complexity, security, score, skipped } = result;
+  const { meta, summary, complexity, security, dependencies, score, skipped } = result;
   return `<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><title>Code Scan Report</title>
 <style>
@@ -47,6 +47,12 @@ table{border-collapse:collapse;margin:.5rem 0}th,td{border:1px solid #ddd;paddin
 <section><h2>Cyclomatic Complexity (threshold ${complexity.threshold})</h2>
 ${barChart(complexity.flagged.slice(0, 10).map((f) => [`${f.name} (${f.file})`, f.score]))}
 ${rows(['Function', 'File', 'Line', 'Score', 'Band'], complexity.flagged.map((f) => [f.name, f.file, f.line, f.score, f.band]))}</section>
+<section><h2>Dependencies</h2>
+<p>Modules: ${dependencies.summary.modules} · Internal edges: ${dependencies.summary.internalEdges} · External imports: ${dependencies.summary.externalImports}</p>
+<h3>Circular dependencies (${dependencies.cycles.length})</h3>
+${rows(['Cycle', 'Files'], dependencies.cycles.map((c, i) => [i + 1, c.files.join(', ')]))}
+<h3>Most imported</h3>
+${rows(['File', 'Imported by'], dependencies.mostImported.map((m) => [m.file, m.importedBy]))}</section>
 <section><h2>Security</h2>
 ${rows(['Kind', 'Rule', 'Severity', 'File', 'Line', 'Excerpt'], security.findings.map((s) => [s.kind, s.rule, s.severity, s.file, s.line, s.excerpt]))}</section>
 <section><h2>Skipped</h2>
