@@ -25,6 +25,8 @@ test('produces a complete result object', () => {
   assert.ok(!('duplication' in r), 'duplication key must be removed from the result');
   assert.ok('security' in r, 'result has a security section');
   assert.ok(!('secrets' in r), 'secrets key replaced by security');
+  assert.ok('dependencies' in r, 'result has a dependencies section');
+  assert.ok(Array.isArray(r.dependencies.cycles), 'dependencies.cycles is an array');
 });
 
 test('scanner skips gitignored files by default', () => {

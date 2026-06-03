@@ -5,6 +5,7 @@ import { lineMetrics } from './metrics/lines.js';
 import { parseFile, countDefinitions, commentLineNumbers } from './analyzers/ast.js';
 import { fileComplexity } from './analyzers/complexity.js';
 import { scanSecrets, scanDangerousCalls } from './analyzers/security.js';
+import { extractImports, analyzeDependencies } from './analyzers/dependencies.js';
 import { scoreResult } from './score.js';
 
 export function scan(rootDir, { threshold = 10, ignore = [], gitignore = true, includeTests = false } = {}) {
@@ -15,6 +16,7 @@ export function scan(rootDir, { threshold = 10, ignore = [], gitignore = true, i
   const flagged = [];
   const allFnScores = [];
   const securityFindings = [];
+  const importEntries = [];
   const skipped = [];
 
   for (const file of files) {
@@ -47,20 +49,23 @@ export function scan(rootDir, { threshold = 10, ignore = [], gitignore = true, i
         if (fn.score > threshold) flagged.push({ file, line: fn.line, name: fn.name, score: fn.score, band: fn.band });
       }
       securityFindings.push(...scanDangerousCalls(parsed.ast, content, file));
+      importEntries.push({ file, specifiers: extractImports(parsed.ast) });
     } else {
       const m = lineMetrics(content);
       summary.totalLines += m.total; summary.code += m.code; summary.blanks += m.blanks;
     }
   }
 
+  const jsFiles = new Set(files.filter((f) => isJsTs(f)));
+  const dependencies = analyzeDependencies(importEntries, jsFiles);
   const avg = allFnScores.length ? Number((allFnScores.reduce((a, b) => a + b, 0) / allFnScores.length).toFixed(2)) : 0;
   const max = allFnScores.length ? Math.max(...allFnScores) : 0;
   const complexity = { threshold, avg, max, flagged };
   const security = { findings: securityFindings };
-  const score = scoreResult({ complexity, security });
+  const score = scoreResult({ complexity, security, dependencies });
 
   return {
     meta: { target: rootDir, scannedAt: new Date().toISOString(), durationMs: Date.now() - start },
-    summary, complexity, security, score, skipped,
+    summary, complexity, security, dependencies, score, skipped,
   };
 }
