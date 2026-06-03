@@ -8,7 +8,8 @@ const result = {
   complexity: { threshold: 10, avg: 4, max: 12, flagged: [{ file: 'a.js', line: 2, name: 'f', score: 12, band: 'refactor' }] },
   security: { findings: [] },
   dependencies: { cycles: [], summary: { modules: 0, internalEdges: 0, externalImports: 0 }, mostImported: [] },
-  score: { value: 88, grade: 'B', breakdown: { security: 0, complexity: -3, dependencies: 0 } },
+  coverage: { totalModules: 0, testedModules: 0, ratio: 1, untested: [] },
+  score: { value: 88, grade: 'B', breakdown: { security: 0, complexity: -3, dependencies: 0, coverage: 0 } },
   skipped: [],
 };
 
@@ -27,7 +28,8 @@ test('renders a skipped section', () => {
     complexity: { threshold: 10, avg: 0, max: 0, flagged: [] },
     security: { findings: [] },
     dependencies: { cycles: [], summary: { modules: 0, internalEdges: 0, externalImports: 0 }, mostImported: [] },
-    score: { value: 100, grade: 'A', breakdown: { security: 0, complexity: 0, dependencies: 0 } },
+    coverage: { totalModules: 0, testedModules: 0, ratio: 1, untested: [] },
+    score: { value: 100, grade: 'A', breakdown: { security: 0, complexity: 0, dependencies: 0, coverage: 0 } },
     skipped: [{ file: 'broken.ts', reason: 'parseError: x' }],
   };
   const html = toHtml(r);
@@ -46,11 +48,30 @@ test('renders a dependencies section with a circular dependency', () => {
       summary: { modules: 2, internalEdges: 2, externalImports: 1 },
       mostImported: [{ file: 'src/b.js', importedBy: 1 }],
     },
-    score: { value: 92, grade: 'A', breakdown: { security: 0, complexity: 0, dependencies: -8 } },
+    coverage: { totalModules: 0, testedModules: 0, ratio: 1, untested: [] },
+    score: { value: 92, grade: 'A', breakdown: { security: 0, complexity: 0, dependencies: -8, coverage: 0 } },
     skipped: [],
   };
   const html = toHtml(r);
   assert.ok(html.includes('Dependencies'));
   assert.ok(html.includes('src/a.js, src/b.js'));
+  assert.ok(!html.includes('http://') && !html.includes('https://'));
+});
+
+test('renders a test coverage section', () => {
+  const r = {
+    meta: { target: '/x', scannedAt: 'now', durationMs: 1 },
+    summary: { totalFiles: 2, byLanguage: { JavaScript: 2 }, totalLines: 4, code: 4, comments: 0, blanks: 0, functions: 0, classes: 0 },
+    complexity: { threshold: 10, avg: 0, max: 0, flagged: [] },
+    security: { findings: [] },
+    dependencies: { cycles: [], summary: { modules: 2, internalEdges: 0, externalImports: 0 }, mostImported: [] },
+    coverage: { totalModules: 2, testedModules: 1, ratio: 0.5, untested: ['src/b.js'] },
+    score: { value: 90, grade: 'A', breakdown: { security: 0, complexity: 0, dependencies: 0, coverage: -10 } },
+    skipped: [],
+  };
+  const html = toHtml(r);
+  assert.ok(html.includes('Test Coverage'));
+  assert.ok(html.includes('50%'));
+  assert.ok(html.includes('src/b.js'));
   assert.ok(!html.includes('http://') && !html.includes('https://'));
 });

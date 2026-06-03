@@ -28,7 +28,7 @@ function rows(headers, data) {
 }
 
 export function toHtml(result) {
-  const { meta, summary, complexity, security, dependencies, score, skipped } = result;
+  const { meta, summary, complexity, security, dependencies, coverage, score, skipped } = result;
   return `<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><title>Code Scan Report</title>
 <style>
@@ -53,6 +53,9 @@ ${rows(['Function', 'File', 'Line', 'Score', 'Band'], complexity.flagged.map((f)
 ${rows(['Cycle', 'Files'], dependencies.cycles.map((c, i) => [i + 1, c.files.join(', ')]))}
 <h3>Most imported</h3>
 ${rows(['File', 'Imported by'], dependencies.mostImported.map((m) => [m.file, m.importedBy]))}</section>
+<section><h2>Test Coverage</h2>
+<p>Coverage: ${Math.round(coverage.ratio * 100)}% — tested ${coverage.testedModules} / ${coverage.totalModules} modules</p>
+${rows(['Untested module'], coverage.untested.slice(0, 50).map((f) => [f]))}</section>
 <section><h2>Security</h2>
 ${rows(['Kind', 'Rule', 'Severity', 'File', 'Line', 'Excerpt'], security.findings.map((s) => [s.kind, s.rule, s.severity, s.file, s.line, s.excerpt]))}</section>
 <section><h2>Skipped</h2>

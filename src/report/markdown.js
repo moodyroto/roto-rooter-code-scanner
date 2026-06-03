@@ -9,7 +9,7 @@ function table(headers, rows) {
 }
 
 export function toMarkdown(result) {
-  const { meta, summary, complexity, security, dependencies, score, skipped } = result;
+  const { meta, summary, complexity, security, dependencies, coverage, score, skipped } = result;
   const langRows = Object.entries(summary.byLanguage).map(([k, v]) => [k, String(v)]);
   return `# Code Scan Report
 
@@ -18,7 +18,7 @@ export function toMarkdown(result) {
 
 ## Score: ${score.value} / 100 — Grade: ${score.grade}
 
-Penalties — security: ${score.breakdown.security}, complexity: ${score.breakdown.complexity}, dependencies: ${score.breakdown.dependencies}
+Penalties — security: ${score.breakdown.security}, complexity: ${score.breakdown.complexity}, dependencies: ${score.breakdown.dependencies}, coverage: ${score.breakdown.coverage}
 
 ## Summary
 
@@ -40,6 +40,12 @@ ${table(['Cycle', 'Files'], dependencies.cycles.map((c, i) => [String(i + 1), c.
 
 ### Most imported
 ${table(['File', 'Imported by'], dependencies.mostImported.map((m) => [m.file, String(m.importedBy)]))}
+
+## Test Coverage
+Coverage: ${Math.round(coverage.ratio * 100)}% — tested ${coverage.testedModules} / ${coverage.totalModules} modules
+
+### Untested modules (${coverage.untested.length})
+${table(['File'], coverage.untested.slice(0, 50).map((f) => [f]))}
 
 ## Security
 ${table(['Kind', 'Rule', 'Severity', 'File', 'Line', 'Excerpt'], security.findings.map((s) => [s.kind, s.rule, s.severity, s.file, String(s.line), s.excerpt]))}
