@@ -34,3 +34,17 @@ test('score works without a dependencies argument (defaults to no cycles)', () =
   assert.equal(r.value, 100);
   assert.equal(r.breakdown.dependencies, 0);
 });
+
+test('penalizes low test coverage', () => {
+  const base = { complexity: { flagged: [] }, security: { findings: [] }, dependencies: { cycles: [] } };
+  const low = scoreResult({ ...base, coverage: { ratio: 0.4 } });
+  assert.equal(low.breakdown.coverage, -12); // -round(20 * 0.6)
+  const full = scoreResult({ ...base, coverage: { ratio: 1 } });
+  assert.equal(full.breakdown.coverage, 0);
+});
+
+test('score defaults coverage to fully-covered when omitted', () => {
+  const r = scoreResult({ complexity: { flagged: [] }, security: { findings: [] } });
+  assert.equal(r.breakdown.coverage, 0);
+  assert.equal(r.value, 100);
+});
