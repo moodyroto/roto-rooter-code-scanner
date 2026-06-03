@@ -8,43 +8,51 @@ test('clean codebase scores 100 / A', () => {
   assert.equal(r.grade, 'A');
 });
 
-test('penalizes security findings and complexity', () => {
+test('penalizes security and complexity under budget', () => {
   const r = scoreResult({
-    complexity: { flagged: [{ band: 'high-risk' }, { band: 'refactor' }] },
-    security: { findings: [{ severity: 'high' }, { severity: 'medium' }] },
+    complexity: { flagged: [{ band: 'high-risk' }, { band: 'refactor' }] }, // 8+3=11
+    security: { findings: [{ severity: 'high' }, { severity: 'medium' }] },  // 15+9=24
   });
-  // 100 - (8 + 3) - (15 + 9) = 65
-  assert.equal(r.value, 65);
+  assert.equal(r.value, 65); // 100 - 24 - 11
   assert.equal(r.grade, 'D');
-  assert.ok(r.breakdown.security < 0);
-  assert.ok(!('secrets' in r.breakdown));
+  assert.equal(r.breakdown.security, -24);
+  assert.equal(r.breakdown.complexity, -11);
 });
 
-test('penalizes circular dependencies, capped at -24', () => {
+test('caps security at -40 and complexity at -20', () => {
+  const r = scoreResult({
+    complexity: { flagged: Array(10).fill({ band: 'high-risk' }) }, // 80 -> cap 20
+    security: { findings: Array(4).fill({ severity: 'high' }) },     // 60 -> cap 40
+  });
+  assert.equal(r.breakdown.security, -40);
+  assert.equal(r.breakdown.complexity, -20);
+});
+
+test('caps circular-dependency penalty at -15', () => {
   const base = { complexity: { flagged: [] }, security: { findings: [] } };
-  const one = scoreResult({ ...base, dependencies: { cycles: [{ files: ['a', 'b'] }] } });
-  assert.equal(one.breakdown.dependencies, -8);
-  assert.equal(one.value, 92);
-  const many = scoreResult({ ...base, dependencies: { cycles: [{}, {}, {}, {}] } });
-  assert.equal(many.breakdown.dependencies, -24);
+  assert.equal(scoreResult({ ...base, dependencies: { cycles: [{}] } }).breakdown.dependencies, -8);
+  assert.equal(scoreResult({ ...base, dependencies: { cycles: [{}, {}, {}, {}] } }).breakdown.dependencies, -15);
 });
 
-test('score works without a dependencies argument (defaults to no cycles)', () => {
+test('coverage penalty uses a 25-point budget', () => {
+  const base = { complexity: { flagged: [] }, security: { findings: [] } };
+  assert.equal(scoreResult({ ...base, coverage: { ratio: 0.4 } }).breakdown.coverage, -15); // round(25*0.6)
+  assert.equal(scoreResult({ ...base, coverage: { ratio: 1 } }).breakdown.coverage, 0);
+});
+
+test('omitting dependencies/coverage yields 0 penalty for those categories', () => {
   const r = scoreResult({ complexity: { flagged: [] }, security: { findings: [] } });
-  assert.equal(r.value, 100);
   assert.equal(r.breakdown.dependencies, 0);
-});
-
-test('penalizes low test coverage', () => {
-  const base = { complexity: { flagged: [] }, security: { findings: [] }, dependencies: { cycles: [] } };
-  const low = scoreResult({ ...base, coverage: { ratio: 0.4 } });
-  assert.equal(low.breakdown.coverage, -12); // -round(20 * 0.6)
-  const full = scoreResult({ ...base, coverage: { ratio: 1 } });
-  assert.equal(full.breakdown.coverage, 0);
-});
-
-test('score defaults coverage to fully-covered when omitted', () => {
-  const r = scoreResult({ complexity: { flagged: [] }, security: { findings: [] } });
   assert.equal(r.breakdown.coverage, 0);
-  assert.equal(r.value, 100);
+});
+
+test('all categories maxed -> 0 / F', () => {
+  const r = scoreResult({
+    complexity: { flagged: Array(10).fill({ band: 'high-risk' }) },
+    security: { findings: Array(5).fill({ severity: 'high' }) },
+    dependencies: { cycles: [{}, {}, {}] },
+    coverage: { ratio: 0 },
+  });
+  assert.equal(r.value, 0);
+  assert.equal(r.grade, 'F');
 });
