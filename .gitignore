@@ -3,3 +3,4 @@ scan-report/
 *.log
 
 .DS_Store
+.superpowers/
