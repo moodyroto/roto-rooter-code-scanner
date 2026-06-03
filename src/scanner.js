@@ -6,6 +6,8 @@ import { parseFile, countDefinitions, commentLineNumbers } from './analyzers/ast
 import { fileComplexity } from './analyzers/complexity.js';
 import { scanSecrets, scanDangerousCalls } from './analyzers/security.js';
 import { extractImports, analyzeDependencies } from './analyzers/dependencies.js';
+import { isTestFile } from './test-files.js';
+import { analyzeCoverage } from './analyzers/coverage.js';
 import { scoreResult } from './score.js';
 
 export function scan(rootDir, { threshold = 10, ignore = [], gitignore = true, includeTests = false } = {}) {
@@ -58,14 +60,17 @@ export function scan(rootDir, { threshold = 10, ignore = [], gitignore = true, i
 
   const jsFiles = new Set(files.filter((f) => isJsTs(f)));
   const dependencies = analyzeDependencies(importEntries, jsFiles);
+  const withTests = traverse(rootDir, { ignore, gitignore, includeTests: true });
+  const testFiles = withTests.filter((f) => isJsTs(f) && isTestFile(f));
+  const coverage = analyzeCoverage([...jsFiles], testFiles);
   const avg = allFnScores.length ? Number((allFnScores.reduce((a, b) => a + b, 0) / allFnScores.length).toFixed(2)) : 0;
   const max = allFnScores.length ? Math.max(...allFnScores) : 0;
   const complexity = { threshold, avg, max, flagged };
   const security = { findings: securityFindings };
-  const score = scoreResult({ complexity, security, dependencies });
+  const score = scoreResult({ complexity, security, dependencies, coverage });
 
   return {
     meta: { target: rootDir, scannedAt: new Date().toISOString(), durationMs: Date.now() - start },
-    summary, complexity, security, dependencies, score, skipped,
+    summary, complexity, security, dependencies, coverage, score, skipped,
   };
 }
