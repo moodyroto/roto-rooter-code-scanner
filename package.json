@@ -1,18 +1,43 @@
 {
-  "name": "code-scanner",
+  "name": "@ma/roto-rooter",
   "version": "1.0.0",
-  "description": "",
+  "description": "A CLI that analyzes a JS/TS codebase and reports on its quality.",
+  "type": "module",
   "main": "src/index.js",
+  "bin": {
+    "roto-rooter": "src/cli.js"
+  },
+  "files": [
+    "src",
+    "RESEARCH.md"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "test": "node --test",
-    "scan": "node src/cli.js"
+    "scan": "node src/cli.js",
+    "prepublishOnly": "npm test"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "code-quality",
+    "static-analysis",
+    "cli",
+    "scanner",
+    "metrics"
+  ],
+  "author": "Michael Rotoloni",
   "license": "ISC",
-  "type": "module",
-  "bin": {
-    "code-scanner": "src/cli.js"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moodyroto/roto-rooter-code-scanner.git"
+  },
+  "bugs": {
+    "url": "https://github.com/moodyroto/roto-rooter-code-scanner/issues"
+  },
+  "homepage": "https://github.com/moodyroto/roto-rooter-code-scanner#readme",
+  "publishConfig": {
+    "@ma:registry": "https://<artifactory-host>/artifactory/api/npm/<npm-repo>/"
   },
   "dependencies": {
     "@babel/parser": "^7.29.7",
